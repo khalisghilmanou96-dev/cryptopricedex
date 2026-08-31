@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CryptoPriceDex : recherche de cryptomonnaies, prix, market cap et variations via CoinLore." />
+  <title>CryptoPriceDex — Prix des cryptomonnaies</title>
+  <meta name="build" content="github-selfcontained-2026-08-31" />
+<style>
+:root {
+  --bg: #071713;
+  --surface: #0d211b;
+  --surface-muted: #14352b;
+  --text: #f3fff9;
+  --muted: #8fb9aa;
+  --border: #1f493c;
+  --accent: #3ee6a8;
+  --accent-dark: #24bd86;
+  --shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top right, rgba(62, 230, 168, 0.14), transparent 25%),
+    var(--bg);
+  color: var(--text);
+}
+
+button, input { font: inherit; }
+button { cursor: pointer; }
+
+.page-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 36px 0 72px;
+}
+
+.hero {
+  min-height: 300px;
+  padding: 48px;
+  border-radius: 32px;
+  background: linear-gradient(135deg, #081e19 0%, #0e3a31 58%, #4b163f 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  box-shadow: var(--shadow);
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.hero .eyebrow { color: #79ffd0; }
+.hero h1 {
+  margin: 0;
+  font-size: clamp(3rem, 8vw, 6rem);
+  line-height: 0.95;
+  letter-spacing: -0.055em;
+}
+
+.subtitle {
+  max-width: 700px;
+  margin: 22px 0 0;
+  color: #b6d8cc;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.hero-badge {
+  width: 132px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 4rem;
+  background: rgba(255,255,255,.09);
+  border: 1px solid rgba(255,255,255,.15);
+  flex: 0 0 auto;
+}
+
+.controls {
+  margin: 28px 0 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+}
+
+.search-box {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(15,23,42,.04);
+}
+
+.search-box input {
+  border: 0;
+  outline: 0;
+  padding: 12px 14px;
+  min-width: 0;
+  background: transparent;
+  color: var(--text);
+}
+
+.search-box button,
+.secondary-button,
+.ghost-button {
+  border: 0;
+  border-radius: 12px;
+  padding: 13px 18px;
+  font-weight: 700;
+}
+
+.search-box button {
+  background: var(--accent);
+  color: white;
+}
+.search-box button:hover { background: var(--accent-dark); }
+.secondary-button { background: #531a46; color: white; }
+.ghost-button { background: var(--surface-muted); color: var(--text); }
+
+.status {
+  min-height: 24px;
+  color: var(--muted);
+  margin: 8px 0 26px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.section-heading h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.035em;
+}
+
+.pokemon-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.pokemon-card {
+  position: relative;
+  min-height: 330px;
+  padding: 18px;
+  border-radius: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+  overflow: hidden;
+  transition: transform .2s ease, box-shadow .2s ease;
+  cursor: pointer;
+}
+.pokemon-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 42px rgba(15,23,42,.1);
+}
+.pokemon-card::before {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  top: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.card-topline,
+.card-content,
+.pokemon-image { position: relative; z-index: 1; }
+.card-topline {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: .9rem;
+  font-weight: 700;
+}
+.card-arrow { font-size: 1.1rem; }
+.pokemon-image {
+  display: block;
+  width: 190px;
+  height: 190px;
+  object-fit: contain;
+  margin: 14px auto 6px;
+  image-rendering: auto;
+}
+.pokemon-name {
+  margin: 0 0 10px;
+  font-size: 1.25rem;
+  text-transform: capitalize;
+}
+.pokemon-types { display: flex; flex-wrap: wrap; gap: 7px; }
+.type-pill {
+  display: inline-flex;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: #c5eadc;
+  font-size: .75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.pokemon-dialog {
+  width: min(720px, calc(100% - 24px));
+  border: 0;
+  border-radius: 28px;
+  padding: 0;
+  box-shadow: 0 30px 90px rgba(0,0,0,.3);
+  overflow: hidden;
+}
+.pokemon-dialog::backdrop { background: rgba(17,24,39,.66); backdrop-filter: blur(6px); }
+.close-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 4;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(255,255,255,.9);
+  font-size: 1.5rem;
+}
+.detail-shell { padding: 34px; background: #0d211b; }
+.detail-hero {
+  border-radius: 22px;
+  padding: 26px;
+  background: linear-gradient(135deg, #12382e, #401737);
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 24px;
+  align-items: center;
+}
+.detail-hero img { width: 220px; height: 220px; object-fit: contain; }
+.detail-name { margin: 0; font-size: 2.4rem; text-transform: capitalize; letter-spacing: -.04em; }
+.detail-number { color: var(--muted); font-weight: 800; margin-bottom: 8px; }
+.detail-meta { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 18px; color: #a7cdbf; }
+.stats { margin-top: 28px; }
+.stat-row { display: grid; grid-template-columns: 120px 1fr 46px; gap: 12px; align-items: center; margin: 12px 0; }
+.stat-name { color: #a7cdbf; text-transform: capitalize; font-size: .9rem; }
+.stat-bar { height: 10px; background: #18372f; border-radius: 999px; overflow: hidden; }
+.stat-fill { height: 100%; background: #3ee6a8; border-radius: inherit; }
+.stat-value { font-weight: 800; text-align: right; }
+
+@media (max-width: 900px) {
+  .pokemon-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .controls { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 620px) {
+  .page-shell { width: min(100% - 20px, 1180px); padding-top: 10px; }
+  .hero { padding: 30px 24px; border-radius: 24px; min-height: 260px; }
+  .hero-badge { display: none; }
+  .pokemon-grid { grid-template-columns: 1fr; }
+  .search-box { grid-template-columns: 1fr; }
+  .section-heading { align-items: start; flex-direction: column; }
+  .detail-shell { padding: 22px; }
+  .detail-hero { grid-template-columns: 1fr; text-align: center; }
+  .detail-hero img { margin: auto; }
+  .pokemon-types, .detail-meta { justify-content: center; }
+  .stat-row { grid-template-columns: 88px 1fr 38px; }
+}
+
+
+.search-box select {
+  border: 0;
+  outline: 0;
+  padding: 12px 10px;
+  background: var(--surface-muted);
+  color: var(--text);
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 18px;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--muted);
+}
+.info-row strong { color: var(--text); font-weight: 700; }
+.description { margin-top: 24px; line-height: 1.65; }
+.description p { color: #a7cdbf; max-height: 210px; overflow: auto; margin-bottom: 0; }
+@media (max-width: 620px) {
+  .search-box select { width: 100%; }
+  .info-row { grid-template-columns: 1fr; gap: 4px; }
+}
+
+.price-row { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:14px; }
+.crypto-price { font-size:1.05rem; }
+.crypto-change { font-size:.84rem; font-weight:800; }
+.positive { color:#16a34a; }
+.negative { color:#dc2626; }
+
+.api-panel{margin:28px 0 14px;padding:18px 20px;border:1px solid var(--border);border-radius:18px;background:linear-gradient(135deg,rgba(62,230,168,.08),rgba(201,78,160,.08));display:flex;gap:16px;align-items:center;justify-content:space-between}.api-panel p{margin:5px 0 0;color:var(--muted);font-size:.9rem}.api-key-row{display:flex;gap:8px;min-width:min(100%,430px)}.api-key-row input{flex:1;min-width:0;border:1px solid var(--border);background:#081b16;color:var(--text);border-radius:12px;padding:12px 14px;outline:0}.api-key-row button{border:0;border-radius:12px;padding:12px 16px;background:#c94ea0;color:white;font-weight:800}.positive{color:#53efb3}.negative{color:#ff6f9f}.price-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}.pokemon-dialog{position:fixed;inset:0;z-index:1000;width:auto;max-width:none;background:transparent;box-shadow:none;border-radius:0;display:grid;place-items:center;padding:12px}.modal-hidden{display:none}.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px)}.modal-panel{position:relative;z-index:1;width:min(720px,100%);max-height:92vh;overflow:auto;border-radius:28px;background:var(--surface);box-shadow:0 30px 90px rgba(0,0,0,.45)}.close-button{color:#111}.info-row{display:flex;justify-content:space-between;gap:18px;padding:11px 0;border-bottom:1px solid var(--border)}.description{margin-top:22px;color:var(--muted);line-height:1.6}@media(max-width:700px){.api-panel{align-items:stretch;flex-direction:column}.api-key-row{min-width:0}.hero{padding:30px}.hero-badge{display:none}}
+
+</style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Prix crypto · CoinLore API</p>
+        <h1>CryptoPriceDex</h1>
+        <p class="subtitle">Suis les prix des cryptomonnaies, leurs variations, volumes et capitalisations avec les données publiques CoinLore.</p>
+      </div>
+      <div class="hero-badge" aria-hidden="true">₿</div>
+    </header>
+
+    <main>
+      <section class="controls" aria-label="Recherche crypto">
+        <div class="search-box">
+          <input id="searchInput" type="search" placeholder="Ex. Bitcoin, Ethereum, Solana…" autocomplete="off" />
+          <select id="currencySelect" aria-label="Devise">
+            <option value="eur">EUR</option>
+            <option value="usd">USD</option>
+            <option value="gbp">GBP</option>
+          </select>
+          <button id="searchButton" type="button">Rechercher</button>
+        </div>
+        <button id="randomButton" class="secondary-button" type="button">🎲 Au hasard</button>
+      </section>
+
+      <p id="status" class="status" aria-live="polite"></p>
+
+      <section>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Marché</p>
+            <h2>Cryptos populaires</h2>
+          </div>
+          <button id="loadMoreButton" class="ghost-button" type="button">Afficher plus</button>
+        </div>
+        <div id="cryptoGrid" class="pokemon-grid"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="cryptoDialog" class="pokemon-dialog modal-hidden" role="dialog" aria-modal="true" aria-labelledby="detailTitle"><div class="modal-backdrop"></div><div class="modal-panel">
+    <button id="closeDialogButton" class="close-button" type="button" aria-label="Fermer">×</button>
+    <div id="cryptoDetails"></div>
+  </div></div>
+
+  <template id="cryptoCardTemplate">
+    <article class="pokemon-card">
+      <div class="card-topline">
+        <span class="crypto-rank"></span>
+        <span class="card-arrow">↗</span>
+      </div>
+      <img class="pokemon-image" src="" alt="" loading="lazy" />
+      <div class="card-content">
+        <h3 class="pokemon-name"></h3>
+        <div class="pokemon-types"></div>
+        <div class="price-row">
+          <strong class="crypto-price"></strong>
+          <span class="crypto-change"></span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script>
+const API_BASE = "/api/crypto";
+const PAGE_SIZE = 8;
+
+const CRYPTO_LOGOS = {"ada":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%230033ad%22%2F%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%2265%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22101%22%20cy%3D%2274%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22155%22%20cy%3D%2274%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%2282%22%20cy%3D%2291%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%2292%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22174%22%20cy%3D%2291%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%2271%22%20cy%3D%22118%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22101%22%20cy%3D%22116%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22155%22%20cy%3D%22116%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22185%22%20cy%3D%22118%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%2271%22%20cy%3D%22145%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22101%22%20cy%3D%22148%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22155%22%20cy%3D%22148%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22185%22%20cy%3D%22145%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%2282%22%20cy%3D%22170%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22169%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22174%22%20cy%3D%22170%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22101%22%20cy%3D%22187%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22155%22%20cy%3D%22187%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22196%22%20r%3D%226%22%20fill%3D%22%23fff%22%2F%3E%3C%2Fsvg%3E","apt":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23111111%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EA%3C%2Ftext%3E%3C%2Fsvg%3E","arb":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%232d374b%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EA%3C%2Ftext%3E%3C%2Fsvg%3E","atom":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%232e3148%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EA%3C%2Ftext%3E%3C%2Fsvg%3E","avax":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23e84142%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EA%3C%2Ftext%3E%3C%2Fsvg%3E","bch":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%238dc351%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%E2%82%BF%3C%2Ftext%3E%3C%2Fsvg%3E","bnb":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23f3ba2f%22%2F%3E%3Cg%20fill%3D%22%23111%22%3E%3Cpath%20d%3D%22M128%2048%2092%2084l20%2020%2016-16%2016%2016%2020-20-36-36Z%22%2F%3E%3Cpath%20d%3D%22m84%2092-28%2028%2020%2020%208-8%208%208%2020-20-28-28Z%22%2F%3E%3Cpath%20d%3D%22m172%2092-28%2028%2020%2020%208-8%208%208%2020-20-28-28Z%22%2F%3E%3Cpath%20d%3D%22m128%20136-36%2036%2036%2036%2036-36-36-36Zm0%2028%208%208-8%208-8-8%208-8Z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E","btc":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23f7931a%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%E2%82%BF%3C%2Ftext%3E%3C%2Fsvg%3E","dai":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23f5ac37%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3ED%3C%2Ftext%3E%3C%2Fsvg%3E","doge":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23c2a633%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%C3%90%3C%2Ftext%3E%3C%2Fsvg%3E","dot":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23e6007a%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%E2%97%8F%3C%2Ftext%3E%3C%2Fsvg%3E","etc":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23328332%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%CE%9E%3C%2Ftext%3E%3C%2Fsvg%3E","eth":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23f4f5f8%22%2F%3E%3Cpath%20d%3D%22M128%2034%2073%20128l55%2032%2055-32-55-94Z%22%20fill%3D%22%23343434%22%2F%3E%3Cpath%20d%3D%22M128%20160%2073%20128l55%2077%2055-77-55%2032Z%22%20fill%3D%22%235a5a5a%22%2F%3E%3C%2Fsvg%3E","fil":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%230090ff%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EF%3C%2Ftext%3E%3C%2Fsvg%3E","generic":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23152a25%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%2349e0ad%22%3E%E2%82%BF%3C%2Ftext%3E%3C%2Fsvg%3E","icp":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%236b4eff%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%E2%88%9E%3C%2Ftext%3E%3C%2Fsvg%3E","inj":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%2300b8d9%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EI%3C%2Ftext%3E%3C%2Fsvg%3E","link":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%232a5ada%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EL%3C%2Ftext%3E%3C%2Fsvg%3E","ltc":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23345d9d%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%C5%81%3C%2Ftext%3E%3C%2Fsvg%3E","matic":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%238247e5%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EM%3C%2Ftext%3E%3C%2Fsvg%3E","near":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23111111%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EN%3C%2Ftext%3E%3C%2Fsvg%3E","op":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23ff0420%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2256%22%20fill%3D%22%23ffffff%22%3EOP%3C%2Ftext%3E%3C%2Fsvg%3E","pol":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%238247e5%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EP%3C%2Ftext%3E%3C%2Fsvg%3E","shib":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23f00500%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3ES%3C%2Ftext%3E%3C%2Fsvg%3E","sol":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23101218%22%2F%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%2300ffa3%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23dc1fff%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22url(%23g)%22%3E%3Cpath%20d%3D%22M72%2074h100l20%2020H92L72%2074Z%22%2F%3E%3Cpath%20d%3D%22M92%20108h100l-20%2020H72l20-20Z%22%2F%3E%3Cpath%20d%3D%22M72%20142h100l20%2020H92l-20-20Z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E","steth":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%2300a3ff%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EE%3C%2Ftext%3E%3C%2Fsvg%3E","ton":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%230098ea%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E","trx":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23ef0027%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3ET%3C%2Ftext%3E%3C%2Fsvg%3E","uni":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23ff007a%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EU%3C%2Ftext%3E%3C%2Fsvg%3E","usdc":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%232775ca%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%24%3C%2Ftext%3E%3C%2Fsvg%3E","usdt":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%2326a17b%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3E%E2%82%AE%3C%2Ftext%3E%3C%2Fsvg%3E","xlm":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%23000000%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EX%3C%2Ftext%3E%3C%2Fsvg%3E","xrp":"data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22256%22%20height%3D%22256%22%20viewBox%3D%220%200%20256%20256%22%3E%3Ccircle%20cx%3D%22128%22%20cy%3D%22128%22%20r%3D%22112%22%20fill%3D%22%2323292f%22%2F%3E%3Ctext%20x%3D%22128%22%20y%3D%22158%22%20text-anchor%3D%22middle%22%20font-family%3D%22Arial%2CHelvetica%2Csans-serif%22%20font-weight%3D%22800%22%20font-size%3D%2292%22%20fill%3D%22%23ffffff%22%3EX%3C%2Ftext%3E%3C%2Fsvg%3E"};
+
+const FALLBACK_IMAGE = CRYPTO_LOGOS.generic;
+
+function cryptoLogo(symbol) {
+  const clean = String(symbol || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!clean) return FALLBACK_IMAGE;
+  const aliases = { wbtc: "btc", weth: "eth", busd: "bnb", usdttrc20: "usdt", usdceth: "usdc" };
+  return CRYPTO_LOGOS[aliases[clean] || clean] || FALLBACK_IMAGE;
+}
+function setImageFallback(img) {
+  img.onerror = null;
+  img.src = FALLBACK_IMAGE;
+}
+
+const grid = document.querySelector("#cryptoGrid");
+const statusEl = document.querySelector("#status");
+const searchInput = document.querySelector("#searchInput");
+const currencySelect = document.querySelector("#currencySelect");
+const searchButton = document.querySelector("#searchButton");
+const randomButton = document.querySelector("#randomButton");
+const loadMoreButton = document.querySelector("#loadMoreButton");
+const cardTemplate = document.querySelector("#cryptoCardTemplate");
+const dialog = document.querySelector("#cryptoDialog");
+const details = document.querySelector("#cryptoDetails");
+const closeDialogButton = document.querySelector("#closeDialogButton");
+
+let loadedCount = 0;
+let loadedEntities = [];
+
+function setStatus(message = "") { statusEl.textContent = message; }
+function safe(value, fallback = "—") { return value ?? fallback; }
+function currencyCode() { return currencySelect.value.toUpperCase(); }
+function formatMoney(value, digits = 2) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+  const n = Number(value);
+  const maxDigits = Math.abs(n) < 1 ? 8 : digits;
+  return new Intl.NumberFormat("fr-FR", { style: "currency", currency: currencyCode(), maximumFractionDigits: maxDigits }).format(n);
+}
+function formatCompact(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+  return new Intl.NumberFormat("fr-FR", { notation: "compact", maximumFractionDigits: 2 }).format(Number(value));
+}
+function formatPercent(value) {
+  if (value === null || value === undefined || Number.isNaN(Number(value))) return "—";
+  const n = Number(value);
+  return `${n >= 0 ? "+" : ""}${n.toFixed(2)} %`;
+}
+async function fetchJson(url) {
+  const response = await fetch(url, { headers: { accept: "application/json" } });
+  if (!response.ok) throw new Error(`Erreur API (${response.status})`);
+  return response.json();
+}
+async function directUsdRate(currency) {
+  const code = String(currency || "usd").toUpperCase();
+  if (code === "USD") return 1;
+  if (!["EUR", "GBP"].includes(code)) return 1;
+  const data = await fetchJson(`https://api.frankfurter.dev/v2/rate/USD/${code}`);
+  return Number(data.rate) || 1;
+}
+function directNormalize(c, rate = 1) {
+  const n = v => { const x = Number(v); return Number.isFinite(x) ? x : null; };
+  const cv = v => { const x = n(v); return x === null ? null : x * rate; };
+  return {
+    id: String(c.id), name: c.name, symbol: c.symbol,
+    market_cap_rank: n(c.rank), current_price: cv(c.price_usd),
+    market_cap: cv(c.market_cap_usd), total_volume: cv(c.volume24 || c.volume24a),
+    price_change_percentage_24h: n(c.percent_change_24h), circulating_supply: n(c.csupply),
+    total_supply: n(c.tsupply), max_supply: n(c.msupply), percent_change_1h: n(c.percent_change_1h),
+    percent_change_7d: n(c.percent_change_7d), image: cryptoLogo(c.symbol)
+  };
+}
+async function apiGetDirect(endpoint, params = {}) {
+  const currency = String(params.currency || currencySelect.value || "eur").toLowerCase();
+  const rate = await directUsdRate(currency);
+  if (endpoint === "markets") {
+    const start = Math.max(0, Number(params.start) || 0);
+    const limit = Math.min(100, Math.max(1, Number(params.limit) || PAGE_SIZE));
+    const payload = await fetchJson(`https://api.coinlore.net/api/tickers/?start=${start}&limit=${limit}`);
+    return (payload.data || []).map(c => directNormalize(c, rate));
+  }
+  if (endpoint === "search") {
+    const q = String(params.query || "").trim().toLowerCase();
+    const assetsPayload = await fetchJson("https://api.coinlore.net/api/assets/");
+    const list = Array.isArray(assetsPayload) ? assetsPayload : (assetsPayload.data || []);
+    const matches = list.filter(c => [c.name, c.symbol, c.nameid].some(v => String(v || "").toLowerCase().includes(q)))
+      .sort((a,b) => (String(a.symbol||"").toLowerCase()===q||String(a.name||"").toLowerCase()===q?0:1) - (String(b.symbol||"").toLowerCase()===q||String(b.name||"").toLowerCase()===q?0:1) || Number(a.rank||999999)-Number(b.rank||999999));
+    if (!matches.length) throw new Error("Crypto introuvable.");
+    const payload = await fetchJson(`https://api.coinlore.net/api/ticker/?id=${encodeURIComponent(matches[0].id)}`);
+    if (!payload[0]) throw new Error("Données de marché indisponibles.");
+    return directNormalize(payload[0], rate);
+  }
+  if (endpoint.startsWith("coin/")) {
+    const id = endpoint.slice(5);
+    const [tickerPayload, infoPayload] = await Promise.all([
+      fetchJson(`https://api.coinlore.net/api/ticker/?id=${encodeURIComponent(id)}`),
+      fetchJson(`https://api.coinlore.net/api/coin/info/?id=${encodeURIComponent(id)}`).catch(() => [])
+    ]);
+    const ticker = tickerPayload[0];
+    if (!ticker) throw new Error("Crypto introuvable.");
+    const info = Array.isArray(infoPayload) ? (infoPayload[0] || {}) : infoPayload;
+    const base = directNormalize(ticker, rate);
+    return { ...base, image: cryptoLogo(ticker.symbol), ath: info.ath == null ? null : Number(info.ath) * rate,
+      ath_date: info.ath_date || null, launch_date: info.startdate || info.first_price_date || null,
+      platform: info.platform || null, website: info.website || null, explorer: info.explorer || null };
+  }
+  throw new Error("Endpoint inconnu.");
+}
+async function apiGet(endpoint, params = {}) {
+  const url = new URL(`${API_BASE}/${endpoint}`, window.location.origin);
+  Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+  try {
+    const response = await fetch(url, { headers: { accept: "application/json" } });
+    if (response.ok) return response.json();
+    if (response.status !== 404) {
+      let message = `Erreur API (${response.status})`;
+      try { const payload = await response.json(); if (payload?.error) message = payload.error; } catch (_) {}
+      throw new Error(message);
+    }
+  } catch (error) {
+    if (error && error.message && !/Failed to fetch|NetworkError|Load failed|404/.test(error.message)) throw error;
+  }
+  setStatus("Backend indisponible : connexion directe à CoinLore…");
+  return apiGetDirect(endpoint, params);
+}
+
+function createPill(text, extraClass = "") {
+  const pill = document.createElement("span");
+  pill.className = `type-pill ${extraClass}`.trim();
+  pill.textContent = text;
+  return pill;
+}
+function createCard(coin) {
+  const node = cardTemplate.content.cloneNode(true);
+  const card = node.querySelector(".pokemon-card");
+  const image = node.querySelector(".pokemon-image");
+  const pills = node.querySelector(".pokemon-types");
+  const change = Number(coin.price_change_percentage_24h);
+  node.querySelector(".crypto-rank").textContent = coin.market_cap_rank ? `#${coin.market_cap_rank}` : "CRYPTO";
+  node.querySelector(".pokemon-name").textContent = coin.name;
+  node.querySelector(".crypto-price").textContent = formatMoney(coin.current_price);
+  node.querySelector(".crypto-change").textContent = formatPercent(change);
+  node.querySelector(".crypto-change").classList.add(change >= 0 ? "positive" : "negative");
+  image.src = cryptoLogo(coin.symbol);
+  image.alt = `Logo de ${coin.name}`;
+  image.onerror = () => setImageFallback(image);
+  pills.appendChild(createPill(String(coin.symbol || "").toUpperCase()));
+  pills.appendChild(createPill(`MCap ${formatCompact(coin.market_cap)}`));
+  card.addEventListener("click", () => openDetails(coin.id));
+  return node;
+}
+async function loadPopular(count = PAGE_SIZE) {
+  setStatus("Chargement des données de marché…");
+  loadMoreButton.disabled = true;
+  try {
+    const coins = await apiGet("markets", { start: loadedCount, limit: count, currency: currencySelect.value });
+    if (!coins.length) { setStatus("Aucune autre crypto disponible."); return; }
+    loadedEntities.push(...coins);
+    coins.forEach(coin => grid.appendChild(createCard(coin)));
+    loadedCount += coins.length;
+    setStatus(`${coins.length} nouvelles cryptos chargées depuis CoinLore.`);
+  } catch (error) {
+    console.error(error);
+    setStatus(error.message || "Impossible de charger le marché.");
+  } finally { loadMoreButton.disabled = false; }
+}
+function infoRow(label, value) { return `<div class="info-row"><span>${label}</span><strong>${safe(value)}</strong></div>`; }
+async function openDetails(id) {
+  setStatus("Chargement de la fiche crypto…");
+  try {
+    const coin = await apiGet(`coin/${encodeURIComponent(id)}`, { currency: currencySelect.value });
+    const change24 = coin.price_change_percentage_24h;
+    details.innerHTML = `
+      <div class="detail-shell">
+        <div class="detail-hero">
+          <img src="${cryptoLogo(coin.symbol)}" alt="Logo de ${safe(coin.name, "crypto")}">
+          <div>
+            <div class="detail-number">${coin.market_cap_rank ? `#${coin.market_cap_rank}` : "CRYPTO"} · ${safe(coin.symbol, "").toUpperCase()}</div>
+            <h2 id="detailTitle" class="detail-name">${safe(coin.name)}</h2>
+            <div class="pokemon-types"><span class="type-pill">${safe(coin.symbol, "").toUpperCase()}</span>${coin.platform ? `<span class="type-pill">${coin.platform}</span>` : ""}</div>
+            <div class="detail-meta">
+              <span><strong>${formatMoney(coin.current_price)}</strong><br>Prix</span>
+              <span><strong class="${Number(change24) >= 0 ? "positive" : "negative"}">${formatPercent(change24)}</strong><br>24 h</span>
+              <span><strong>${formatCompact(coin.market_cap)}</strong><br>Market cap</span>
+            </div>
+          </div>
+        </div>
+        <div class="stats">
+          <p class="eyebrow">Informations</p>
+          ${infoRow("Symbole", safe(coin.symbol, "").toUpperCase())}
+          ${infoRow("Rang market cap", coin.market_cap_rank ? `#${coin.market_cap_rank}` : null)}
+          ${infoRow("Volume 24 h", formatMoney(coin.total_volume, 0))}
+          ${infoRow("Variation 1 h", formatPercent(coin.percent_change_1h))}
+          ${infoRow("Variation 7 j", formatPercent(coin.percent_change_7d))}
+          ${infoRow("ATH", formatMoney(coin.ath))}
+          ${infoRow("Offre en circulation", coin.circulating_supply ? `${formatCompact(coin.circulating_supply)} ${safe(coin.symbol, "").toUpperCase()}` : null)}
+          ${coin.launch_date ? infoRow("Premières données", coin.launch_date) : ""}
+          ${coin.website ? `<div class="description"><strong>Site officiel</strong><p><a href="${coin.website}" target="_blank" rel="noopener noreferrer">${coin.website}</a></p></div>` : ""}
+        </div>
+      </div>`;
+    dialog.classList.remove("modal-hidden");
+    setStatus(`${coin.name} chargé depuis CoinLore.`);
+  } catch (error) {
+    console.error(error);
+    setStatus(error.message || "Impossible de charger la fiche détaillée.");
+  }
+}
+async function searchCrypto() {
+  const query = searchInput.value.trim();
+  if (!query) { searchInput.focus(); setStatus("Entre le nom ou le symbole d’une cryptomonnaie."); return; }
+  setStatus(`Recherche de “${query}”…`);
+  try {
+    const coin = await apiGet("search", { query, currency: currencySelect.value });
+    await openDetails(coin.id);
+  } catch (error) { console.error(error); setStatus(error.message || `Aucun résultat pour “${query}”.`); }
+}
+async function randomCrypto() {
+  if (!loadedEntities.length) await loadPopular(PAGE_SIZE);
+  const coin = loadedEntities[Math.floor(Math.random() * loadedEntities.length)];
+  if (coin) openDetails(coin.id);
+}
+async function reloadCurrency() {
+  grid.innerHTML = ""; loadedCount = 0; loadedEntities = []; loadMoreButton.disabled = false; await loadPopular(PAGE_SIZE);
+}
+searchButton.addEventListener("click", searchCrypto);
+searchInput.addEventListener("keydown", event => { if (event.key === "Enter") searchCrypto(); });
+randomButton.addEventListener("click", randomCrypto);
+loadMoreButton.addEventListener("click", () => loadPopular(PAGE_SIZE));
+currencySelect.addEventListener("change", reloadCurrency);
+closeDialogButton.addEventListener("click", () => dialog.classList.add("modal-hidden"));
+dialog.addEventListener("click", event => { if (event.target.classList.contains("modal-backdrop")) dialog.classList.add("modal-hidden"); });
+loadPopular(PAGE_SIZE);
+
+</script>
+</body>
+</html>
