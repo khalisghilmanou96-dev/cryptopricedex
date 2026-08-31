@@ -66,7 +66,7 @@ function normalizeTicker(c, rate = 1) {
     max_supply: num(c.msupply),
     percent_change_1h: num(c.percent_change_1h),
     percent_change_7d: num(c.percent_change_7d),
-    image: null,
+    image: cryptoLogo(c.symbol),
   };
 }
 

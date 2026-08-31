@@ -22,3 +22,7 @@ Il peut également être adapté en fonctions serverless.
 APIs utilisées :
 - CoinLore : données crypto publiques, sans clé API.
 - Frankfurter : conversion USD → EUR/GBP, sans clé API.
+
+
+## Logos crypto locaux
+Les logos affichés dans les cartes et les fiches détaillées sont chargés depuis `assets/crypto/`. Aucun CDN externe n’est nécessaire pour les images, ce qui évite les problèmes de rendu sur GitHub Pages. Les symboles non inclus utilisent automatiquement `assets/crypto/generic.svg`.

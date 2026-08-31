@@ -1,13 +1,19 @@
 const API_BASE = "/api/crypto";
 const PAGE_SIZE = 8;
 
-const FALLBACK_IMAGE = "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500">
-  <rect width="500" height="500" rx="50" fill="#eef1f6"/>
-  <circle cx="250" cy="250" r="145" fill="#d1fae5"/>
-  <text x="250" y="280" text-anchor="middle" font-family="Arial" font-weight="700" font-size="110" fill="#059669">₿</text>
-  <text x="250" y="455" text-anchor="middle" font-family="Arial" font-size="24" fill="#64748b">CRYPTOPRICEDEX</text>
-</svg>`);
+const FALLBACK_IMAGE = "assets/crypto/generic.svg";
+
+
+function cryptoLogo(symbol) {
+  const clean = String(symbol || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!clean) return FALLBACK_IMAGE;
+  const aliases = { wbtc: "btc", weth: "eth", busd: "bnb", usdttrc20: "usdt", usdceth: "usdc" };
+  return `assets/crypto/${aliases[clean] || clean}.svg`;
+}
+function setImageFallback(img) {
+  img.onerror = null;
+  img.src = FALLBACK_IMAGE;
+}
 
 const grid = document.querySelector("#cryptoGrid");
 const statusEl = document.querySelector("#status");
@@ -63,7 +69,7 @@ function directNormalize(c, rate = 1) {
     market_cap: cv(c.market_cap_usd), total_volume: cv(c.volume24 || c.volume24a),
     price_change_percentage_24h: n(c.percent_change_24h), circulating_supply: n(c.csupply),
     total_supply: n(c.tsupply), max_supply: n(c.msupply), percent_change_1h: n(c.percent_change_1h),
-    percent_change_7d: n(c.percent_change_7d), image: null
+    percent_change_7d: n(c.percent_change_7d), image: cryptoLogo(c.symbol)
   };
 }
 async function apiGetDirect(endpoint, params = {}) {
@@ -96,7 +102,7 @@ async function apiGetDirect(endpoint, params = {}) {
     if (!ticker) throw new Error("Crypto introuvable.");
     const info = Array.isArray(infoPayload) ? (infoPayload[0] || {}) : infoPayload;
     const base = directNormalize(ticker, rate);
-    return { ...base, image: info.logo || null, ath: info.ath == null ? null : Number(info.ath) * rate,
+    return { ...base, image: cryptoLogo(ticker.symbol), ath: info.ath == null ? null : Number(info.ath) * rate,
       ath_date: info.ath_date || null, launch_date: info.startdate || info.first_price_date || null,
       platform: info.platform || null, website: info.website || null, explorer: info.explorer || null };
   }
@@ -139,7 +145,7 @@ function createCard(coin) {
   node.querySelector(".crypto-change").classList.add(change >= 0 ? "positive" : "negative");
   image.src = coin.image || FALLBACK_IMAGE;
   image.alt = `Logo de ${coin.name}`;
-  image.onerror = () => { image.src = FALLBACK_IMAGE; };
+  image.onerror = () => setImageFallback(image);
   pills.appendChild(createPill(String(coin.symbol || "").toUpperCase()));
   pills.appendChild(createPill(`MCap ${formatCompact(coin.market_cap)}`));
   card.addEventListener("click", () => openDetails(coin.id));
@@ -169,7 +175,7 @@ async function openDetails(id) {
     details.innerHTML = `
       <div class="detail-shell">
         <div class="detail-hero">
-          <img src="${coin.image || FALLBACK_IMAGE}" alt="Logo de ${safe(coin.name, "crypto")}" onerror="this.src='${FALLBACK_IMAGE}'">
+          <img src="${coin.image || FALLBACK_IMAGE}" alt="Logo de ${safe(coin.name, "crypto")}" onerror="this.onerror=null;this.src='${FALLBACK_IMAGE}'">
           <div>
             <div class="detail-number">${coin.market_cap_rank ? `#${coin.market_cap_rank}` : "CRYPTO"} · ${safe(coin.symbol, "").toUpperCase()}</div>
             <h2 id="detailTitle" class="detail-name">${safe(coin.name)}</h2>
