@@ -1,0 +1,1 @@
+CryptoPriceDex – version GitHub Pages autonome. CSS, JavaScript et logos crypto transparents sont intégrés directement dans index.html. Les logos sont désormais nets, sans badge circulaire imposé, avec un filigrane discret dans les cartes.
